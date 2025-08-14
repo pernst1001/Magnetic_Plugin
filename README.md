@@ -80,7 +80,7 @@ Run scripts as described in the tutorial:
 
 Example:
 ```bash
-./isaaclab.sh -p scripts/...
+./isaaclab.sh -p scripts/... .py
 ```
 
 ### 2) RL Environment
