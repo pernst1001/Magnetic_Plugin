@@ -1,0 +1,16 @@
+<launch>
+    <node name="color_tracker" pkg="color_tracker" type="hsv_color_tracker_node.py" output="screen">
+        <param name="lower_h" type="int" value="0" />
+        <param name="upper_h" type="int" value="15" />
+        <param name="lower_s" type="int" value="150"/>
+        <param name="upper_s" type="int" value="250" />
+        <param name="lower_v" type="int" value="90" />
+        <param name="upper_v" type="int" value="180" />
+        <param name="image_topic" type="string" value="/camera/basler_camera/image_raw" />
+        <param name="fx" type="double" value="119.567e-6" />
+        <param name="fy" type="double" value="-101.583e-6" />
+        <param name="origin_x" type="double" value="991.622" />
+        <param name="origin_y" type="double" value="527.18" />
+    </node>
+
+</launch>

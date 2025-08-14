@@ -1,0 +1,25 @@
+<launch>
+    <arg name="skrl_checkpoint" default="/home/pascal/IsaacLab/logs/skrl/rigid_catheter/2025-07-02_07-34-10_ppo_torch/checkpoints/best_agent.pt" />
+    <arg name="skrl_observation_space" default="4" />
+    <arg name="skrl_action_space" default="1" />
+    <arg name="skrl_max_angle_divider_field" default="3.0" />
+    <arg name="skrl_max_angle_divider_goal" default="5.0" />
+    <arg name="skrl_field_magnitude" default="0.02" />
+    <arg name="skrl_goal_radius" default="0.003" />
+    <arg name="skrl_goal_count" default="20000" />
+
+    <node name="skrl_controller" pkg="skrl_controller" type="skrl_controller.py" output="screen">
+        <param name="observation_space" type="int" value="$(arg skrl_observation_space)" />
+        <param name="action_space" type="int" value="$(arg skrl_action_space)" />
+        <param name="checkpoint_path" type="string" value="$(arg skrl_checkpoint)" />
+        <param name="cfg_path" type="string" value="/home/pascal/IsaacLab/source/isaaclab_tasks/isaaclab_tasks/direct/rigid_catheter/agents/skrl_ppo_cfg.yaml" />
+        <param name="max_angle_divider_field" type="double" value="$(arg skrl_max_angle_divider_field)" />
+        <param name="max_angle_divider_goal" type="double" value="$(arg skrl_max_angle_divider_goal)" />
+        <param name="field_magnitude" type="double" value="$(arg skrl_field_magnitude)" />
+        <param name="goal_radius" type="double" value="$(arg skrl_goal_radius)" />
+        <param name="goal_count" type="int" value="$(arg skrl_goal_count)" />
+
+        <remap from="/skrl_controller/field" to="/backward_model/field"/>
+    </node>
+
+</launch>

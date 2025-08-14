@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Please either add respawn="true" or required="true" to each node. -->
+
+<launch>  
+    
+    <arg name="emns_param_path" default="$(find mag_manip)/params/Navion_2.yaml" />
+    <arg name="navion_version" default="1_2" />
+    <arg name="cal_path" default="$(find mpem)/cal/Navion_$(arg navion_version)_Calibration.yaml" />
+
+    <node name="mns_broadcaster" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 1 world mns 100" respawn="true" />
+
+    <node name="nav_controller" pkg="nav_controller" type="navion_controller_node" output="screen" respawn="true"> 
+        <rosparam command="load" file="$(find nav_controller)/launch/parameters.yaml" />
+        <rosparam command="load" file="$(find nav_controller)/param/navion_$(arg navion_version).yaml" />
+        <param name="emns_param" type="string" value="$(find mag_manip)/params/Navion_2.yaml"/>
+        <!-- This line gets added by snapcraft during build: <rosparam command="load" file="$(env SNAP_DATA)/nav_controller_parameters.yaml" />  -->
+    </node>
+
+    <node name="backward_model" pkg="mag_calculator" type="backward_model" output="screen" respawn="true">
+        <param name="calibration_path" type="string" value="$(arg cal_path)" />
+        <param name="is_field_inverted" type="bool" value="true" />
+        <param name="max_field_intensity" type="double" value="0.08" />
+        <remap from="/backward_model/currents" to="navion/target_currents"/>
+    </node>
+
+    <node name="forward_model" pkg="mag_calculator" type="forward_model" output="screen" respawn="true">
+        <param name="calibration_path" type="string" value="$(arg cal_path)" />
+        <param name="display_warning_zero_field" type="bool" value="false" />
+        <param name="is_field_inverted" type="bool" value="true" />
+        <remap from="/forward_model/currents" to="navion/actual_currents"/>
+        <remap from="/forward_model/field_array" to="navion/actual_field"/>
+    </node>
+
+    <include file="$(find skrl_controller)/launch/skrl_launch.launch" >
+        <arg name="skrl_checkpoint" value="/home/pascal/Documents/Experiment_Data/models/v11.pt" />
+        <arg name="skrl_observation_space" default="4" />
+        <arg name="skrl_action_space" default="1" />
+        <arg name="skrl_max_angle_divider_field" default="3.0" />
+        <arg name="skrl_max_angle_divider_goal" default="5.0" />
+        <arg name="skrl_field_magnitude" default="0.025" />
+        <arg name="skrl_goal_radius" default="0.003" />
+        <arg name="skrl_goal_count" default="30" />
+    </include>
+
+    <include file="$(find color_tracker)/launch/hsv_tracker.launch" />
+
+    <include file="$(find basler_camera)/launch/basler_camera.launch">
+        <arg name="camera_frame_rate" value="10" />
+    </include>
+    <!-- RViz -->
+    <node name="rviz" pkg="rviz" type='rviz' args="-d $(find nav_rviz)/rviz/config_navion_skrl.rviz" output="screen" />
+    <include file="$(find nav_rviz)/launch/navion_urdf_model.launch"/>
+
+</launch>

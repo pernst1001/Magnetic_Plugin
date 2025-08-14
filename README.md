@@ -8,6 +8,7 @@ This repository provides tools and environments for simulating magnetic fields i
 2. **Utility Scripts** (`magnetic_scripts/`) – Preconfigured scripts for automation, testing, and simulation–experiment comparison.
 3. **RL Environment** (`rigid_catheter/`) – Direct workflow RL environments for catheter control.
 4. **Rigid Catheter Asset** (`USD/`) – 3D model and configuration files for catheter simulation.
+5. **Experiment** (`Experiment/`) – The code used to play a learned policy in reality using ROS.
 
 ---
 
@@ -33,6 +34,16 @@ Install `mag-manip` in your Isaac Lab Python environment:
 ```bash
 ./isaaclab.sh -p -m pip install mag-manip
 ```
+Install `Weights & Biases` in your Isaac Lab Python environment for logging:
+```bash
+./isaaclab.sh -p -m pip install wandb
+```
+
+Install `Optuna` in your Isaac Lab Python environment for the optimization:
+```bash
+./isaaclab.sh -p -m pip install optuna
+```
+
 
 ---
 
