@@ -8,7 +8,7 @@ class MPEMHandler:
     '''
     Class to handle the currents and field calculations using the MPEM model.
     '''
-    def __init__(self, calibration_path='Navion_2_Calibration_24-02-2020.yaml', number_of_currents=3, device='cuda:0'):
+    def __init__(self, calibration_path='Navion_1_2_Calibration.yaml', number_of_currents=3, device='cuda:0'):
         '''
         Initialize the MPEM model
         Args:
@@ -68,7 +68,7 @@ class MPEMHandler:
             gradient (torch.tensor): gradient5 prediction
         '''
         position, currents = self.check_convert_inputs_3(position), self.check_convert_currents(currents) # Convert from torch to numpy
-        field_gradient = self.forward_model.computeFieldGradient5FromCurrents(position, currents) 
+        field_gradient = self.forward_model.computeFieldGradient5FromCurrents(position, currents)
         field, gradient = torch.tensor(field_gradient[0:3], dtype=torch.float32, device=self.device), torch.tensor(field_gradient[3:], dtype=torch.float32, device=self.device)
         return field.reshape(3), gradient.reshape(5)
     

@@ -3,7 +3,7 @@ from isaaclab.assets import RigidObject
 from omni.physics.tensors.impl.api import RigidBodyView
 from .mpem import MPEMHandler
 from .force_torque_calc import MagneticForceTorque
-from isaaclab.utils.math import quat_inv, quat_mul, quat_apply
+from isaaclab.utils.math import quat_inv, quat_mul, quat_apply, convert_quat
 from scipy.spatial.transform import Rotation as R
 import torch
 from typing import Union
@@ -30,10 +30,10 @@ class MagneticEntity:
         self.mangetic_dipole_magnitude = self.calculate_magnetic_dipole_magnitude(volume, remanence)
         direction = direction/torch.linalg.norm(direction)
         self.initial_magnetic_dipole = direction*self.mangetic_dipole_magnitude
-        self.mpem_handler = MPEMHandler(calibration_path='OctoMag_Calibration.yaml',number_of_currents=8, device=self.device)
+        self.mpem_handler = MPEMHandler(calibration_path='Navion_1_2_Calibration.yaml',number_of_currents=3, device=self.device)
         # self.mpem_handler = MPEMHandler(device=self.device)
         self.magnetic_force_torque = MagneticForceTorque(device=self.device)
-        self.initial_quad = self.get_current_quad()
+        self.initial_quad = self.get_current_quad().clone().detach()
 
     def calculate_magnetic_dipole_magnitude(self, volume, remanence):
         '''
@@ -64,6 +64,9 @@ class MagneticEntity:
         if self.is_rigidbody_view:
             transform = self.magnet.get_transforms()
             current_position = transform[:, :3]
+            dipole_moment = self.get_current_dipole_moment()
+            dipole_moment_normed = dipole_moment / torch.linalg.norm(dipole_moment, dim=1, keepdim=True)
+            current_position += dipole_moment_normed * 0.001713
             return current_position
         # If using RigidObject, get the position from the data
         return self.magnet.data.root_state_w[:, :3]
@@ -76,6 +79,7 @@ class MagneticEntity:
         if self.is_rigidbody_view:
             transform = self.magnet.get_transforms()
             current_quad = transform[:, 3:7]
+            current_quad = convert_quat(current_quad, "wxyz")
             return current_quad
         # If using RigidObject, get the quaternion from the data
         return self.magnet.data.root_state_w[:, 3:7]
@@ -85,7 +89,10 @@ class MagneticEntity:
         Get the current dipole moment of the magnet
         '''
         current_quad = self.get_current_quad()
-        current_rotation = quat_mul(quat_inv(self.initial_quad), current_quad).to(torch.float32)
+        # current_rotation = quat_mul(quat_inv(self.initial_quad), current_quad).to(torch.float32)
+        # current_dipole_moment = quat_apply(quat=current_rotation, vec=self.initial_magnetic_dipole)
+        ########################Chat#########################
+        current_rotation = quat_mul(current_quad, quat_inv(self.initial_quad)).to(torch.float32)
         current_dipole_moment = quat_apply(quat=current_rotation, vec=self.initial_magnetic_dipole)
         # current_quad = self.get_current_quad().cpu()
         # current_rotation = R.from_quat(self.initial_quad.cpu()).inv() * R.from_quat(current_quad)
@@ -103,6 +110,7 @@ class MagneticEntity:
             forces, torques = torch.zeros(positions.shape[0], 3, device=self.device), torch.zeros(positions.shape[0], 3, device=self.device)
             for i, position in enumerate(positions):
                 field, gradient = self.mpem_handler.get_field_gradient5(position, currents)
+                field, gradient = field * -1.0, gradient * -1.0
                 current_dipole_moment = self.get_current_dipole_moment()[i]
                 force = self.magnetic_force_torque.calculate_force(current_dipole_moment, gradient)
                 torque = self.magnetic_force_torque.calculate_troque(current_dipole_moment, field)
@@ -126,9 +134,11 @@ class MagneticEntity:
         if self.is_rigidbody_view:
             forces, torques = self.get_force_torque_from_currents(currents)
             all_indices = torch.arange(self.magnet.count, device=self.device)
-            self.magnet.apply_forces_and_torques_at_position(forces, torques, None, indices=all_indices, is_global=True)
+            positions = self.get_magnets_position()
+            self.magnet.apply_forces_and_torques_at_position(forces, torques, positions, indices=all_indices, is_global=True)
+            return forces, torques
         else:
-            force, torque = self.get_force_torque_from_currents(currents)
+            force, torque, field = self.get_force_torque_from_currents(currents)
             self.magnet.set_external_force_and_torque(force, torque)
             self.magnet.write_data_to_sim()
     

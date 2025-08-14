@@ -13,9 +13,7 @@ class MagneticForceTorque():
         '''
         self.check_inputs_3(magnetic_dipole), self.check_inputs_5(gradient)
         [mx, my, mz] = magnetic_dipole
-        force_matrix = torch.tensor([[mx, my, mz, 0, 0], [0, mx, 0, my, mz], [-mz, 0, mx, -mz, my]], dtype=torch.float32, device=self.device)
-        force = torch.matmul(force_matrix, gradient)
-        return force.reshape(1,3)
+        return  compute_force(mx, my, mz, gradient)
     
     def calculate_troque(self, magnetic_dipole, field):
         '''
@@ -25,8 +23,7 @@ class MagneticForceTorque():
             field (torch.tensor): field of the magnet
         '''
         self.check_inputs_3(magnetic_dipole), self.check_inputs_3(field)
-        torque = torch.linalg.cross(magnetic_dipole, field)
-        return torque.reshape(1,3)
+        return compute_torque(magnetic_dipole, field)
     
     def check_inputs_3(self, input):
         '''
@@ -51,4 +48,24 @@ class MagneticForceTorque():
             raise ValueError('Input should have shape (5,) or (5,1)')
     
 
-    
+@torch.jit.script
+def compute_force(
+    mx: torch.Tensor,
+    my: torch.Tensor,
+    mz: torch.Tensor,
+    gradient: torch.Tensor,
+) -> torch.Tensor:
+    """Compute the force from the magnetic dipole and gradient."""
+    row0 = torch.stack([mx, my, mz, torch.tensor(0., device=gradient.device), torch.tensor(0., device=gradient.device)])
+    row1 = torch.stack([torch.tensor(0., device=gradient.device), mx, torch.tensor(0., device=gradient.device), my, mz])
+    row2 = torch.stack([-mz, torch.tensor(0., device=gradient.device), mx, -mz, my])
+    force_matrix = torch.stack([row0, row1, row2])
+    force = torch.matmul(force_matrix, gradient)
+    return force.reshape(1, 3)
+
+def compute_torque(
+    magnetic_dipole: torch.Tensor,
+    field: torch.Tensor,
+    ) -> torch.Tensor:
+    """Compute the torque from the magnetic dipole and field."""
+    return torch.linalg.cross(magnetic_dipole, field).reshape(1, 3)

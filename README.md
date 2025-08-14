@@ -1,71 +1,83 @@
-# Magnetic Plugin for IsaacLab
+# Magnetic Plugin for Isaac Lab
 
-This repository contains various components for working with magnetic simulations in IsaacLab.
+This repository provides tools and environments for simulating magnetic fields in NVIDIA Isaac Lab, including a custom plugin, runnable scripts, and a reinforcement learning (RL) catheter environment.
 
-## Repository Structure
+## Repository Contents
 
-1. **Magnetic Plugin** - Custom plugin for magnetic field simulations (folder magnetic)
-2. **Scripts** - Utility scripts for automation and testing
-3. **Cube RL Environment** - Reinforcement learning environment for magnetic control
-4. **Optimization Framework** - Tools for optimizing magnetic control parameters
-5. **RigidCatheter Asset** - 3D model and configuration for catheter simulation
+1. **Magnetic Plugin** (`magnetic/`) – Custom extension for simulating magnetic fields, forces, and torques.
+2. **Utility Scripts** (`magnetic_scripts/`) – Preconfigured scripts for automation, testing, and simulation–experiment comparison.
+3. **RL Environment** (`rigid_catheter/`) – Direct workflow RL environments for catheter control.
+4. **Rigid Catheter Asset** (`USD/`) – 3D model and configuration files for catheter simulation.
 
-## Installation Guide
+---
 
-### Where to Place Files in IsaacLab
+## Installation
 
-- **Magnetic Plugin**: 
-  - Place in `/.../IsaacLab/source/isaaclab/isaaclab/magnetic`
-  - Register the extension in the extension manager
+### 1) Install Isaac Sim & Isaac Lab
 
-- **Scripts**:
-  - Place in `/.../IsaacLab/scripts/magnetic_scripts/`
-  - Everything prepared to run
+Follow the official Isaac Lab installation guide:  
+<https://isaac-sim.github.io/IsaacLab/main/source/setup/installation/pip_installation.html>
 
-- **Cube RL Environment**:
-  - Place in `/.../Isaaclab/source/isaaclab_tasks/isaaclab_tasks/direct/cube`
+**Tested System Configuration**
+- Isaac Sim: 4.5
+- Isaac Lab: 2.0
+- Commit: `6b794ac`
+- OS: Ubuntu 20.04
+- GPU: NVIDIA RTX A4000
+- CUDA: 12.2
+- NVIDIA Driver: 535.183.01
 
-- **Optimization Framework**:
-  - Place in `/.../IsaacLab/scripts/magnetic_scripts/catheter_optimization`
+### 2) Install Additional Packages
 
-- **RigidCatheter Asset**:
-  - Place in `/.../IsaacLab/source/isaaclab_assets/isaaclab_assets/robots/rigidcatheter.py`
+Install `mag-manip` in your Isaac Lab Python environment:
+```bash
+./isaaclab.sh -p -m pip install mag-manip
+```
 
-## Component Details
+---
 
-### 1. Magnetic Plugin
+## Where to Place Files in Isaac Lab
 
-A custom extension for IsaacLab that simulates magnetic fields and their interaction with objects.
+Consult the repo structure guide for context:  
+<https://isaac-sim.github.io/IsaacLab/main/source/overview/developer-guide/repo_structure.html>
 
-**Usage**:
-- Enable through the extension
-- Apply force & torque to magnets through currents
-- Get Currents through backward model
+- **Magnetic Plugin**
+  - **Path:** `/.../IsaacLab/source/isaaclab/isaaclab/magnetic`
+  - Registers as an extension via the Extension Manager (see: <https://isaac-sim.github.io/IsaacLab/main/source/overview/developer-guide/development.html>).
+  - Provides magnetic field computation and derived force/torque on embedded magnets.
 
-### 2. Scripts
+- **Scripts**
+  - **Path:** `/.../IsaacLab/scripts/magnetic_scripts/`
+  - Ready-to-run utilities; import the magnetic plugin and can be used to compare simulation to real experiments.
 
-Collection of Python scripts.
+- **Rigid Catheter RL Environment**
+  - **Path:** `/.../IsaacLab/source/isaaclab_tasks/isaaclab_tasks/direct/rigid_catheter`
+  - Implements three direct-workflow RL environments (tutorial: <https://isaac-sim.github.io/IsaacLab/main/source/tutorials/03_envs/create_direct_rl_env.html>).
 
-**Usage**:
-- All the used scripts from magnetic cube to deformable catheter to rigidcatheter
+- **Rigid Catheter Asset**
+  - **Path:** `/.../IsaacLab/source/isaaclab_assets/isaaclab_assets/robots/rigidcatheter.py`
+  - Installed here so assets are globally available within the Isaac Lab repository.
 
-### 3. Cube RL Environment
+---
 
-Reinforcement learning environment for training magnetic control policies.
+## How to Run
 
-**Usage**:
-- Direct RL environement to train a cube
+### 1) Scripts
 
-### 4. Optimization Framework
+Run scripts as described in the tutorial:  
+<https://isaac-sim.github.io/IsaacLab/main/source/tutorials/00_sim/create_empty.html>
 
-Tools for optimizing simulation parameter
+Example:
+```bash
+./isaaclab.sh -p scripts/...
+```
 
-**Usage**:
-- Define objective function
-- Set parameters
-- Run optimization using optuna
+### 2) RL Environment
 
-### 5. RigidCatheter Asset
+Launch RL training using SKRL as in the tutorial:  
+<https://isaac-sim.github.io/IsaacLab/main/source/tutorials/03_envs/run_rl_training.html>
 
-Loading USD asset as Articulation
-
+Example:
+```bash
+./isaaclab.sh -p scripts/reinforcement_learning/skrl/train.py --task Isaac-rigidcatheter-v1 --num_envs=64 --headless
+```
